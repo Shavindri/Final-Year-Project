@@ -25,7 +25,7 @@ import streamlit as st
 from google.colab import drive
 drive.mount('/content/drive')
 
-%%writefile app (5).py
+%%writefile app.py
 
 st.set_page_config(
     page_title="Online Banking Cybersecurity Awareness Toolkit",
