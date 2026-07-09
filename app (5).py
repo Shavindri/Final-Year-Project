@@ -25,12 +25,7 @@ import streamlit as st
 from google.colab import drive
 drive.mount('/content/drive')
 
-%%writefile app.py
-
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+%%writefile app (5).py
 
 st.set_page_config(
     page_title="Online Banking Cybersecurity Awareness Toolkit",
