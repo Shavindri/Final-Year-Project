@@ -22,17 +22,22 @@ df = load_data()
 
 st.sidebar.title("Navigation")
 
-page = st.sidebar.radio(
-    "Go to",
-    [
-        "Home",
-        "Dataset Overview",
-        "Exploratory Data Analysis",
-        "Cyber Awareness Assessment",
-        "Biometric Training Demo",
-        "Learning Resources"
-    ]
+pages = [
+    "Home",
+    "Dataset Overview",
+    "Exploratory Data Analysis",
+    "Cyber Awareness Assessment",
+    "Biometric Training Demo",
+    "Learning Resources"
+]
+
+page = st.sidebar.radio("Go to", pages)
+
+
 )
+
+
+
 if page == "Home":
 
     st.title("Online Banking Cybersecurity Awareness Toolkit")
@@ -61,13 +66,9 @@ if page == "Home":
 
     with col2:
 
-    survey_responses = len(df)
-    questionnaire_items = len(df.columns)
-    toolkit_modules = 6
-
-    st.metric("Survey Responses", survey_responses)
-    st.metric("Questionnaire Items", questionnaire_items)
-    st.metric("Toolkit Modules", toolkit_modules)
+    st.metric("Survey Responses", len(df))
+    st.metric("Questionnaire Items", len(df.columns))
+    st.metric("Toolkit Modules", len(pages))
 
     st.write("---")
 
