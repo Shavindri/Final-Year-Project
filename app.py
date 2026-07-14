@@ -61,9 +61,16 @@ if page == "Home":
 
     with col2:
 
-        st.metric("Survey Responses", "32")
-        st.metric("Questionnaire Items", "41")
-        st.metric("Toolkit Modules", "5")
+        with col2:
+
+    # Automatically calculate values
+    survey_responses = len(df)
+    questionnaire_items = len(df.columns)
+    toolkit_modules = len(page.options) if False else 6   # see below
+
+    st.metric("Survey Responses", survey_responses)
+    st.metric("Questionnaire Items", questionnaire_items)
+    st.metric("Toolkit Modules", 6)
 
     st.write("---")
 
