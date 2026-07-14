@@ -33,11 +33,6 @@ pages = [
 
 page = st.sidebar.radio("Go to", pages)
 
-
-)
-
-
-
 if page == "Home":
 
     st.title("Online Banking Cybersecurity Awareness Toolkit")
