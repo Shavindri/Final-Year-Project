@@ -59,27 +59,10 @@ if page == "Home":
         and an educational biometric authentication demonstration.
         """)
 
-    st.write("---")
-
-col1, col2 = st.columns([2,1])
-
-with col1:
-    st.write("""
-    Welcome to the Online Banking Cybersecurity Awareness Toolkit.
-
-    This application was developed as part of a Final Year Research Project to
-    evaluate users' cybersecurity awareness and the effectiveness of front-end
-    security measures used in online banking.
-
-    The toolkit combines survey findings, exploratory data analysis,
-    cybersecurity awareness assessment, personalised recommendations,
-    and an educational biometric authentication demonstration.
-    """)
-
-with col2:
-    st.metric("Survey Responses", len(df))
-    st.metric("Questionnaire Items", len(df.columns))
-    st.metric("Toolkit Modules", len(pages))
+    with col2:
+        st.metric("Survey Responses", len(df))
+        st.metric("Questionnaire Items", len(df.columns))
+        st.metric("Toolkit Modules", len(pages))
 
     st.write("---")
 
