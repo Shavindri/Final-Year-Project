@@ -60,10 +60,9 @@ if page == "Home":
         """)
 
     with col2:
-
     st.metric("Survey Responses", len(df))
     st.metric("Questionnaire Items", len(df.columns))
-    st.metric("Toolkit Modules", len(pages))
+    st.metric("Toolkit Modules", 6)
 
     st.write("---")
 
