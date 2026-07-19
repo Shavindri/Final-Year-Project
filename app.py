@@ -378,56 +378,630 @@ elif page == "Dataset Overview":
 
 
 elif page == "Exploratory Data Analysis":
+
     st.title("Exploratory Data Analysis")
 
-    option = st.selectbox(
-        "Select Analysis",
-        [
-            "Age Distribution",
-            "Gender Distribution",
+    st.write("""
+    This page presents univariate, bivariate and multivariate analyses of the
+    survey dataset. Use the filters to explore how demographic characteristics,
+    online banking usage and cybersecurity-related scores vary across respondents.
+    """)
+
+    st.subheader("Interactive Filters")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        age_options = df["Age"].dropna().unique().tolist()
+
+        age_filter = st.multiselect(
+            "Age Group",
+            options=age_options,
+            default=age_options
+        )
+
+    with col2:
+
+        gender_options = df["Gender"].dropna().unique().tolist()
+
+        gender_filter = st.multiselect(
+            "Gender",
+            options=gender_options,
+            default=gender_options
+        )
+
+    with col3:
+
+        banking_options = (
+            df["Banking_Use"]
+            .dropna()
+            .unique()
+            .tolist()
+        )
+
+        banking_filter = st.multiselect(
             "Banking Usage",
-            "Platform Usage",
-            "Awareness Level",
-            "Behaviour Level",
-            "Biometric Level",
-            "Correlation Heatmap"
-        ]
-    )
+            options=banking_options,
+            default=banking_options
+        )
 
-    if option == "Age Distribution":
-        st.bar_chart(df["Age"].value_counts())
+    filtered_df = df[
+        df["Age"].isin(age_filter)
+        & df["Gender"].isin(gender_filter)
+        & df["Banking_Use"].isin(banking_filter)
+    ].copy()
 
-    elif option == "Gender Distribution":
-        st.bar_chart(df["Gender"].value_counts())
+    if filtered_df.empty:
 
-    elif option == "Banking Usage":
-        st.bar_chart(df["Banking_Use"].value_counts())
+        st.warning(
+            "No records match the selected filters. "
+            "Please change the selected options."
+        )
 
-    elif option == "Platform Usage":
-        st.bar_chart(df["Platform"].value_counts())
+    else:
 
-    elif option == "Awareness Level":
-        st.bar_chart(df["Awareness_Level"].value_counts())
+        st.write("---")
+        st.subheader("Filtered Dataset Summary")
 
-    elif option == "Behaviour Level":
-        st.bar_chart(df["Behaviour_Level"].value_counts())
+        c1, c2, c3, c4 = st.columns(4)
 
-    elif option == "Biometric Level":
-        st.bar_chart(df["Biometric_Level"].value_counts())
+        c1.metric(
+            "Responses",
+            len(filtered_df)
+        )
 
-    elif option == "Correlation Heatmap":
-        corr_cols = [
+        c2.metric(
+            "Average Awareness Score",
+            f"{filtered_df['Awareness_Score'].mean():.2f}"
+        )
+
+        c3.metric(
+            "Average Behaviour Score",
+            f"{filtered_df['Behaviour_Score'].mean():.2f}"
+        )
+
+        c4.metric(
+            "Average Biometric Score",
+            f"{filtered_df['Biometric_Score'].mean():.2f}"
+        )
+
+
+        st.write("---")
+        st.header("Univariate Analysis")
+
+        st.write("""
+        Univariate analysis examines one variable at a time. It is used to
+        understand the frequency, distribution, central tendency and spread
+        of individual variables.
+        """)
+
+
+        st.subheader("Categorical Variable Distributions")
+
+        categorical_variable = st.selectbox(
+            "Select a categorical variable",
+            [
+                "Age",
+                "Gender",
+                "Education",
+                "Banking_Use",
+                "Platform",
+                "Awareness_Level",
+                "Behaviour_Level",
+                "Biometric_Level",
+                "Biggest_Concern"
+            ]
+        )
+
+        category_counts = (
+            filtered_df[categorical_variable]
+            .value_counts()
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            fig, ax = plt.subplots(figsize=(8, 5))
+
+            sns.countplot(
+                data=filtered_df,
+                x=categorical_variable,
+                order=category_counts.index,
+                ax=ax
+            )
+
+            ax.set_title(
+                f"Distribution of {categorical_variable.replace('_', ' ')}"
+            )
+
+            ax.set_xlabel(
+                categorical_variable.replace("_", " ")
+            )
+
+            ax.set_ylabel("Number of Respondents")
+
+            plt.xticks(
+                rotation=35,
+                ha="right"
+            )
+
+            plt.tight_layout()
+
+            st.pyplot(fig)
+
+            plt.close(fig)
+
+        with col2:
+
+            fig, ax = plt.subplots(figsize=(7, 5))
+
+            ax.pie(
+                category_counts.values,
+                labels=category_counts.index,
+                autopct="%1.1f%%",
+                startangle=90
+            )
+
+            ax.set_title(
+                f"Percentage Distribution of "
+                f"{categorical_variable.replace('_', ' ')}"
+            )
+
+            plt.tight_layout()
+
+            st.pyplot(fig)
+
+            plt.close(fig)
+
+        st.subheader("Score Distribution")
+
+        score_columns = [
             "Awareness_Score",
             "Opinion_Score",
             "Behaviour_Score",
             "Biometric_Score"
         ]
 
-        corr = df[corr_cols].corr()
+        score_variable = st.selectbox(
+            "Select a score variable",
+            score_columns,
+            key="score_histogram_variable"
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            fig, ax = plt.subplots(figsize=(8, 5))
+
+            sns.histplot(
+                filtered_df[score_variable].dropna(),
+                bins=8,
+                kde=True,
+                ax=ax
+            )
+
+            ax.set_title(
+                f"Histogram of {score_variable.replace('_', ' ')}"
+            )
+
+            ax.set_xlabel(
+                score_variable.replace("_", " ")
+            )
+
+            ax.set_ylabel("Frequency")
+
+            plt.tight_layout()
+
+            st.pyplot(fig)
+
+            plt.close(fig)
+
+        with col2:
+
+            fig, ax = plt.subplots(figsize=(7, 5))
+
+            sns.boxplot(
+                y=filtered_df[score_variable],
+                ax=ax
+            )
+
+            ax.set_title(
+                f"Box Plot of {score_variable.replace('_', ' ')}"
+            )
+
+            ax.set_ylabel(
+                score_variable.replace("_", " ")
+            )
+
+            plt.tight_layout()
+
+            st.pyplot(fig)
+
+            plt.close(fig)
+
+
+        st.subheader("Descriptive Statistics")
+
+        descriptive_table = (
+            filtered_df[score_columns]
+            .describe()
+            .transpose()
+            .reset_index()
+        )
+
+        descriptive_table = descriptive_table.rename(
+            columns={"index": "Score Variable"}
+        )
+
+        st.dataframe(
+            descriptive_table,
+            use_container_width=True,
+            hide_index=True
+        )
+
+
+        st.write("---")
+        st.header("Bivariate Analysis")
+
+        st.write("""Bivariate analysis examines the relationship between two variables.
+        The charts below compare cybersecurity scores with demographic and
+        online banking characteristics.
+        """)
+
+        st.subheader("Group Comparison")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            grouping_variable = st.selectbox(
+                "Select a grouping variable",
+                [
+                    "Age",
+                    "Gender",
+                    "Education",
+                    "Banking_Use",
+                    "Platform"
+                ]
+            )
+
+        with col2:
+
+            comparison_score = st.selectbox(
+                "Select a score to compare",
+                score_columns,
+                key="group_score"
+            )
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        sns.boxplot(
+            data=filtered_df,
+            x=grouping_variable,
+            y=comparison_score,
+            ax=ax
+        )
+
+        ax.set_title(
+            f"{comparison_score.replace('_', ' ')} by "
+            f"{grouping_variable.replace('_', ' ')}"
+        )
+
+        ax.set_xlabel(
+            grouping_variable.replace("_", " ")
+        )
+
+        ax.set_ylabel(
+            comparison_score.replace("_", " ")
+        )
+
+        plt.xticks(
+            rotation=35,
+            ha="right"
+        )
+
+        plt.tight_layout()
+
+        st.pyplot(fig)
+
+        plt.close(fig)
+
+        st.subheader("Relationship Between Scores")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            x_score = st.selectbox(
+                "Select X-axis score",
+                score_columns,
+                index=0
+            )
+
+        with col2:
+
+            y_score = st.selectbox(
+                "Select Y-axis score",
+                score_columns,
+                index=2
+            )
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        sns.regplot(
+            data=filtered_df,
+            x=x_score,
+            y=y_score,
+            ax=ax
+        )
+
+        ax.set_title(
+            f"Relationship Between "
+            f"{x_score.replace('_', ' ')} and "
+            f"{y_score.replace('_', ' ')}"
+        )
+
+        ax.set_xlabel(
+            x_score.replace("_", " ")
+        )
+
+        ax.set_ylabel(
+            y_score.replace("_", " ")
+        )
+
+        plt.tight_layout()
+
+        st.pyplot(fig)
+
+        plt.close(fig)
+
+        correlation_value = (
+            filtered_df[[x_score, y_score]]
+            .corr()
+            .iloc[0, 1]
+        )
+
+        st.metric(
+            "Pearson Correlation",
+            f"{correlation_value:.3f}"
+        )
+
+        st.subheader("Awareness Level by Gender")
+
+        stacked_table = pd.crosstab(
+            filtered_df["Gender"],
+            filtered_df["Awareness_Level"]
+        )
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        stacked_table.plot(
+            kind="bar",
+            stacked=True,
+            ax=ax
+        )
+
+        ax.set_title(
+            "Awareness Level by Gender"
+        )
+
+        ax.set_xlabel("Gender")
+        ax.set_ylabel("Number of Respondents")
+
+        plt.xticks(rotation=0)
+        plt.tight_layout()
+
+        st.pyplot(fig)
+
+        plt.close(fig)
+
+        st.write("---")
+        st.header("Multivariate Analysis")
+
+        st.write("""
+        Multivariate analysis examines relationships among three or more
+        variables. It helps identify broader patterns across awareness,
+        behaviour, opinions and biometric understanding.
+        """)
+
+        st.subheader("Correlation Heatmap")
+
+        correlation_matrix = (
+            filtered_df[score_columns]
+            .corr()
+        )
 
         fig, ax = plt.subplots(figsize=(7, 5))
-        sns.heatmap(corr, annot=True, cmap="Blues", ax=ax)
+
+        sns.heatmap(
+            correlation_matrix,
+            annot=True,
+            fmt=".2f",
+            cmap="Blues",
+            square=True,
+            linewidths=0.5,
+            ax=ax
+        )
+
+        ax.set_title(
+            "Correlation Between Composite Scores"
+        )
+
+        plt.tight_layout()
+
         st.pyplot(fig)
+
+        plt.close(fig)
+
+        st.subheader("Pairwise Score Analysis")
+
+        pairplot_data = (
+            filtered_df[score_columns]
+            .dropna()
+        )
+
+        if len(pairplot_data) > 1:
+
+            pair_grid = sns.pairplot(
+                pairplot_data,
+                diag_kind="hist"
+            )
+
+            pair_grid.fig.suptitle(
+                "Pairwise Relationships Between Composite Scores",
+                y=1.02
+            )
+
+            st.pyplot(pair_grid.fig)
+
+            plt.close(pair_grid.fig)
+
+        else:
+
+            st.info(
+                "Not enough records are available for pairwise analysis."
+            )
+        st.subheader("Bubble Chart")
+
+        fig, ax = plt.subplots(figsize=(9, 6))
+
+        bubble_sizes = (
+            filtered_df["Opinion_Score"]
+            .fillna(0)
+            .clip(lower=0)
+            * 100
+        )
+
+        scatter = ax.scatter(
+            filtered_df["Awareness_Score"],
+            filtered_df["Behaviour_Score"],
+            s=bubble_sizes,
+            alpha=0.6
+        )
+
+        ax.set_title(
+            "Awareness, Behaviour and Opinion Scores"
+        )
+
+        ax.set_xlabel("Awareness Score")
+        ax.set_ylabel("Behaviour Score")
+
+        st.caption(
+            "The position represents awareness and behaviour scores. "
+            "Bubble size represents the opinion score."
+        )
+
+        plt.tight_layout()
+
+        st.pyplot(fig)
+
+        plt.close(fig)
+
+        st.subheader("Average Composite Scores")
+
+        average_scores = (
+            filtered_df[score_columns]
+            .mean()
+            .reset_index()
+        )
+
+        average_scores.columns = [
+            "Score Type",
+            "Average Score"
+        ]
+
+        average_scores["Score Type"] = (
+            average_scores["Score Type"]
+            .str.replace("_Score", "", regex=False)
+        )
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        sns.barplot(
+            data=average_scores,
+            x="Score Type",
+            y="Average Score",
+            ax=ax
+        )
+
+        ax.set_title(
+            "Average Composite Score Comparison"
+        )
+
+        ax.set_xlabel("Composite Measure")
+        ax.set_ylabel("Average Score")
+
+        plt.tight_layout()
+
+        st.pyplot(fig)
+
+        plt.close(fig)
+
+        st.write("---")
+        st.header("Key Findings")
+
+        awareness_mean = (
+            filtered_df["Awareness_Score"]
+            .mean()
+        )
+
+        behaviour_mean = (
+            filtered_df["Behaviour_Score"]
+            .mean()
+        )
+
+        biometric_mean = (
+            filtered_df["Biometric_Score"]
+            .mean()
+        )
+
+        awareness_biometric_corr = (
+            filtered_df[
+                [
+                    "Awareness_Score",
+                    "Biometric_Score"
+                ]
+            ]
+            .corr()
+            .iloc[0, 1]
+        )
+
+        st.write(
+            f"""The selected dataset contains **{len(filtered_df)} respondents**.
+            The average awareness score is **{awareness_mean:.2f}**, while the
+            average behaviour score is **{behaviour_mean:.2f}** and the average
+            biometric score is **{biometric_mean:.2f}**.
+
+            The correlation between awareness and biometric understanding is
+            **{awareness_biometric_corr:.3f}**. The visualisations show how
+            cybersecurity awareness and behaviour vary across demographic groups
+            and online banking usage patterns.
+            """
+        )
+
+        st.write("---")
+        st.subheader("Filtered Dataset")
+
+        st.dataframe(
+            filtered_df,
+            use_container_width=True
+        )
+
+        filtered_csv = (
+            filtered_df
+            .to_csv(index=False)
+            .encode("utf-8")
+        )
+
+        st.download_button(
+            label="Download Filtered Dataset",
+            data=filtered_csv,
+            file_name="Filtered_Data.csv",
+            mime="text/csv"
+        )
 
 
 elif page == "Cyber Awareness Assessment":
