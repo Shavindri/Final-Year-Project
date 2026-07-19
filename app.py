@@ -4,7 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import streamlit.components.v1 as components
 
+from io import BytesIO
+from PIL import Image, ImageDraw
+from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
@@ -143,20 +147,234 @@ if page == "Home":
 
 
 elif page == "Dataset Overview":
+
     st.title("Dataset Overview")
 
-    st.subheader("Dataset Shape")
-    st.write("Rows:", df.shape[0])
-    st.write("Columns:", df.shape[1])
+    st.write("""
+    This dataset was collected through an online questionnaire designed to
+    evaluate users' cybersecurity awareness and their perceptions of front-end
+    security measures in online banking.
+
+    It includes demographic information, online banking usage, cybersecurity
+    awareness, phishing experiences, practical security scenarios, security
+    behaviour, opinions about authentication controls and biometric awareness.
+    """)
+
+    st.write("---")
+
+    
+    st.subheader("Dataset Summary")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric("Total Responses", df.shape[0])
+    col2.metric("Total Variables", df.shape[1])
+    col3.metric("Missing Values", int(df.isnull().sum().sum()))
+    col4.metric("Duplicate Records", int(df.duplicated().sum()))
+
+    st.write("---")
+
+    
+
+    st.subheader("Dataset Information")
+
+    dataset_info = pd.DataFrame({
+        "Property": [
+            "Number of Rows",
+            "Number of Columns",
+            "Missing Values",
+            "Duplicate Records",
+            "Memory Usage"
+        ],
+        "Value": [
+            df.shape[0],
+            df.shape[1],
+            int(df.isnull().sum().sum()),
+            int(df.duplicated().sum()),
+            f"{df.memory_usage(deep=True).sum() / 1024:.2f} KB"
+        ]
+    })
+
+    st.dataframe(
+        dataset_info,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.write("---")
+
+    st.subheader("Survey Structure")
+
+    survey_structure = pd.DataFrame({
+        "Survey Section": [
+            "Demographic Information",
+            "Cybersecurity Awareness",
+            "Cybersecurity Experience",
+            "Practical Security Scenarios",
+            "Opinions on Security Measures",
+            "Online Banking Behaviour",
+            "Biometric Authentication",
+            "Other Variables"
+        ],
+        "Number of Variables": [
+            7,
+            7,
+            6,
+            4,
+            5,
+            4,
+            6,
+            2
+        ]
+    })
+
+    st.dataframe(
+        survey_structure,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.write("---")
 
     st.subheader("Dataset Preview")
-    st.dataframe(df.head())
 
-    st.subheader("Missing Values")
-    st.dataframe(df.isnull().sum())
+    preview_rows = st.slider(
+        "Select the number of rows to display",
+        min_value=5,
+        max_value=min(20, len(df)),
+        value=5
+    )
+
+    st.dataframe(
+        df.head(preview_rows),
+        use_container_width=True
+    )
+
+    st.write("---")
 
     st.subheader("Data Types")
-    st.dataframe(df.dtypes)
+
+    datatype_table = pd.DataFrame({
+        "Variable": df.columns,
+        "Data Type": df.dtypes.astype(str).values
+    })
+
+    st.dataframe(
+        datatype_table,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.write("---")
+
+
+    st.subheader("Data Type Summary")
+
+    datatype_summary = (
+        df.dtypes.astype(str)
+        .value_counts()
+        .reset_index()
+    )
+
+    datatype_summary.columns = [
+        "Data Type",
+        "Number of Variables"
+    ]
+
+    st.dataframe(
+        datatype_summary,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.write("---")
+
+
+    st.subheader("Missing Value Analysis")
+
+    missing_table = pd.DataFrame({
+        "Variable": df.columns,
+        "Missing Values": df.isnull().sum().values,
+        "Missing Percentage": (
+            df.isnull().mean().values * 100
+        ).round(2)
+    })
+
+    st.dataframe(
+        missing_table,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    if df.isnull().sum().sum() == 0:
+        st.success(
+            "The cleaned dataset contains no missing values."
+        )
+
+    st.write("---")
+
+    st.subheader("Numerical Variable Summary")
+
+    numerical_columns = df.select_dtypes(
+        include=np.number
+    ).columns
+
+    if len(numerical_columns) > 0:
+
+        numerical_summary = (
+            df[numerical_columns]
+            .describe()
+            .transpose()
+            .reset_index()
+        )
+
+        numerical_summary = numerical_summary.rename(
+            columns={"index": "Variable"}
+        )
+
+        st.dataframe(
+            numerical_summary,
+            use_container_width=True,
+            hide_index=True
+        )
+
+    else:
+        st.info(
+            "No numerical variables are available."
+        )
+
+    st.write("---")
+
+
+    st.subheader("Categorical Variable Summary")
+
+    categorical_columns = df.select_dtypes(
+        include=["object", "category"]
+    ).columns
+
+    if len(categorical_columns) > 0:
+
+        categorical_summary = (
+            df[categorical_columns]
+            .describe()
+            .transpose()
+            .reset_index()
+        )
+
+        categorical_summary = categorical_summary.rename(
+            columns={"index": "Variable"}
+        )
+
+        st.dataframe(
+            categorical_summary,
+            use_container_width=True,
+            hide_index=True
+        )
+
+    else:
+        st.info(
+            "No categorical variables are available."
+        )
 
 
 elif page == "Exploratory Data Analysis":
